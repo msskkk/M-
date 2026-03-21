@@ -1,0 +1,15 @@
+name = "location-bot"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[triggers]
+# 15分ごとに定期通知チェック
+crons = ["*/15 * * * *"]
+
+[vars]
+# LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, ANTHROPIC_API_KEY は
+# wrangler secret で設定する
+
+[[kv_namespaces]]
+binding = "KV"
+id = ""  # wrangler kv:namespace create KV で生成されるIDを設定
