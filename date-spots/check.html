@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QA Check - デートスポットサイト動作確認</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 2rem;
+      line-height: 1.7;
+    }
+    h1 {
+      text-align: center;
+      color: #ff6b8a;
+      margin-bottom: 0.3rem;
+      font-size: 1.8rem;
+    }
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+    }
+    .summary-bar {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1.2rem;
+      background: #0f3460;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .summary-bar.has-fail { background: linear-gradient(135deg, #5a1a1a, #3d0f0f); }
+    .summary-bar.all-pass { background: linear-gradient(135deg, #0a3d2a, #064e3b); }
+    .section {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #2a2a4a;
+    }
+    .section h2 {
+      color: #ff8e53;
+      font-size: 1.15rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    .test-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.35rem 0;
+      font-size: 0.9rem;
+    }
+    .test-row .icon { flex-shrink: 0; font-size: 1rem; }
+    .pass { color: #4ade80; }
+    .fail { color: #f87171; }
+    .warn { color: #fbbf24; }
+    .detail {
+      color: #999;
+      font-size: 0.82rem;
+      margin-left: 1.6rem;
+      margin-bottom: 0.2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>QA Check - by リナ</h1>
+  <p class="subtitle">デートどこ行く？ サイト自動テスト</p>
+
+  <div class="summary-bar" id="summary-bar">テスト実行中...</div>
+
+  <div id="results"></div>
+
+  <!-- spots-data.js を読み込み -->
+  <script src="spots-data.js"></script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    const resultsEl = document.getElementById('results');
+    let totalPass = 0;
+    let totalFail = 0;
+    let totalWarn = 0;
+
+    // ===== ユーティリティ =====
+    function addSection(title) {
+      const sec = document.createElement('div');
+      sec.className = 'section';
+      sec.innerHTML = '<h2>' + title + '</h2>';
+      resultsEl.appendChild(sec);
+      return sec;
+    }
+
+    function addResult(section, passed, message, detail) {
+      // passed: true=pass, false=fail, null=warn
+      if (passed === true) totalPass++;
+      else if (passed === false) totalFail++;
+      else totalWarn++;
+
+      var icon = passed === true ? '\u2705' : passed === false ? '\u274C' : '\u26A0\uFE0F';
+      var cls = passed === true ? 'pass' : passed === false ? 'fail' : 'warn';
+
+      var row = document.createElement('div');
+      row.className = 'test-row';
+      row.innerHTML = '<span class="icon">' + icon + '</span><span class="' + cls + '">' + message + '</span>';
+      section.appendChild(row);
+
+      if (detail) {
+        var d = document.createElement('div');
+        d.className = 'detail';
+        d.textContent = detail;
+        section.appendChild(d);
+      }
+    }
+
+    function updateSummary() {
+      var bar = document.getElementById('summary-bar');
+      var hasFail = totalFail > 0;
+      bar.className = 'summary-bar ' + (hasFail ? 'has-fail' : 'all-pass');
+      bar.innerHTML =
+        '<span class="pass">\u2705 PASS: ' + totalPass + '</span>' +
+        '<span class="fail">\u274C FAIL: ' + totalFail + '</span>' +
+        '<span class="warn">\u26A0\uFE0F WARN: ' + totalWarn + '</span>';
+    }
+
+    // =========================================================
+    //  1. SPOTS_DATA 基本チェック
+    // =========================================================
+    var sec1 = addSection('1. SPOTS_DATA 基本チェック');
+
+    var dataExists = typeof SPOTS_DATA !== 'undefined' && Array.isArray(SPOTS_DATA);
+    addResult(sec1, dataExists, 'SPOTS_DATA がグローバル配列として定義されている');
+
+    if (!dataExists) {
+      addResult(sec1, false, 'SPOTS_DATA が見つからないため以降のテストをスキップ');
+      updateSummary();
+      return;
+    }
+
+    var count = SPOTS_DATA.length;
+    addResult(sec1, count > 0, 'データ件数: ' + count + '件');
+
+    // =========================================================
+    //  2. 必須フィールド存在チェック
+    // =========================================================
+    var sec2 = addSection('2. 必須フィールド存在チェック');
+    var requiredFields = ['name', 'area', 'category', 'budget', 'comment', 'rating', 'emoji'];
+
+    SPOTS_DATA.forEach(function(spot, i) {
+      var missing = requiredFields.filter(function(f) {
+        return !(f in spot) || spot[f] === undefined || spot[f] === null;
+      });
+      if (missing.length === 0) {
+        addResult(sec2, true, '[' + i + '] "' + spot.name + '" - 必須フィールド全てOK');
+      } else {
+        addResult(sec2, false, '[' + i + '] "' + (spot.name || '名前なし') + '" - 不足: ' + missing.join(', '));
+      }
+    });
+
+    // =========================================================
+    //  3. budget 数値チェック
+    // =========================================================
+    var sec3 = addSection('3. budget 数値チェック');
+
+    SPOTS_DATA.forEach(function(spot, i) {
+      var isNum = typeof spot.budget === 'number' && !isNaN(spot.budget) && spot.budget >= 0;
+      addResult(sec3, isNum,
+        '[' + i + '] "' + spot.name + '" budget=' + spot.budget + ' (' + typeof spot.budget + ')',
+        !isNum ? 'budget は 0以上の数値である必要があります' : null
+      );
+    });
+
+    // =========================================================
+    //  4. rating 範囲チェック (1-5)
+    // =========================================================
+    var sec4 = addSection('4. rating 範囲チェック (1-5)');
+
+    SPOTS_DATA.forEach(function(spot, i) {
+      var valid = typeof spot.rating === 'number' && spot.rating >= 1 && spot.rating <= 5 && Number.isInteger(spot.rating);
+      addResult(sec4, valid,
+        '[' + i + '] "' + spot.name + '" rating=' + spot.rating,
+        !valid ? 'rating は 1-5 の整数である必要があります' : null
+      );
+    });
+
+    // =========================================================
+    //  5. category 値チェック
+    // =========================================================
+    var sec5 = addSection('5. category 値チェック');
+    var allowedCategories = ['カフェ', '公園', '水族館', '美術館', '夜景'];
+
+    SPOTS_DATA.forEach(function(spot, i) {
+      var valid = allowedCategories.indexOf(spot.category) !== -1;
+      addResult(sec5, valid,
+        '[' + i + '] "' + spot.name + '" category="' + spot.category + '"',
+        !valid ? '許可値: ' + allowedCategories.join(', ') : null
+      );
+    });
+
+    // =========================================================
+    //  6. HTML / CSS / JS クロスファイル整合性（静的解析結果）
+    // =========================================================
+    var sec6 = addSection('6. クロスファイル整合性チェック');
+
+    // --- header セレクタ不一致 ---
+    addResult(sec6, false,
+      'HTML <header id="site-header"> vs CSS .header セレクタ不一致',
+      'CSSは .header で装飾しているが、HTMLには class="header" がない。ヘッダーにグラデーション背景が適用されない'
+    );
+
+    // --- .container 未使用 ---
+    addResult(sec6, false,
+      'CSS .container (max-width:1200px) が HTML で使われていない',
+      'コンテンツの最大幅が制限されず画面いっぱいに広がる'
+    );
+
+    // --- .filters 未使用 ---
+    addResult(sec6, false,
+      'CSS .filters が HTML で使われていない (HTMLは .filter-buttons)',
+      'フィルターボタンのflex横並びスタイルが適用されない'
+    );
+
+    // --- .card-grid 未使用 ---
+    addResult(sec6, false,
+      'CSS .card-grid グリッドが #spots-container に付与されていない',
+      'カードがグリッドレイアウトにならず縦一列になる'
+    );
+
+    // --- .card-body 未使用 ---
+    addResult(sec6, false,
+      'CSS .card-body のスタイルがあるが JS のカード生成で使われていない',
+      'カード内テキストにパディングが効かない'
+    );
+
+    // --- .card-footer / .price 未使用 ---
+    addResult(sec6, false,
+      'CSS .card-footer / .price が JS のカード生成に含まれていない',
+      '予算とエリアの横並びレイアウトが適用されない'
+    );
+
+    // --- .budget-section 未使用 ---
+    addResult(sec6, false,
+      'CSS .budget-section が HTML で使われていない (HTMLは #budget-filter)',
+      '予算スライダーセクションのスタイルが当たらない'
+    );
+
+    // --- タグカラー未適用 ---
+    addResult(sec6, false,
+      'CSS .tag-cafe / .tag-park 等のカテゴリ別色が定義されているが JS で付与されない',
+      'JSは <span class="tag spot-tag"> のみ生成。tag-cafe 等のクラスが付かないのでタグが全て無色'
+    );
+
+    // --- カテゴリフィルター 英語vs日本語 ---
+    addResult(sec6, false,
+      'カテゴリフィルター: data-category="cafe" vs spot.category="カフェ" 言語不一致',
+      'HTMLボタンのdata属性は英語、SPOTS_DATAのcategoryは日本語。フィルターが永遠にマッチしない'
+    );
+
+    // --- エリアフィルター 英語vs日本語 ---
+    addResult(sec6, false,
+      'エリアフィルター: data-area="shibuya" vs spot.area="渋谷" 言語不一致',
+      'HTMLボタンのdata属性は英語、SPOTS_DATAのareaは日本語。エリアフィルターも機能しない'
+    );
+
+    // --- フィルターに存在しないエリア ---
+    var filterAreas = ['渋谷', 'お台場', '六本木', '浅草', '新宿'];
+    var uniqueAreas = [];
+    SPOTS_DATA.forEach(function(s) {
+      if (uniqueAreas.indexOf(s.area) === -1) uniqueAreas.push(s.area);
+    });
+    var missingAreas = uniqueAreas.filter(function(a) { return filterAreas.indexOf(a) === -1; });
+
+    if (missingAreas.length > 0) {
+      addResult(sec6, false,
+        'データのエリア "' + missingAreas.join(', ') + '" に対応するフィルターボタンがない',
+        'これらのエリアのスポットはフィルターで選択不可'
+      );
+    } else {
+      addResult(sec6, true, 'データの全エリアにフィルターボタンが対応');
+    }
+
+    // --- .no-results 未定義 ---
+    addResult(sec6, null,
+      'JS: 結果0件時に .no-results クラスを使うが CSS に定義がない',
+      '「見つかりません」メッセージのスタイルが未定義'
+    );
+
+    // --- 予算スライダー範囲 ---
+    var maxBudget = Math.max.apply(null, SPOTS_DATA.map(function(s) { return s.budget; }));
+    addResult(sec6, null,
+      '予算スライダーの max=10000 だがデータの最大 budget は ' + maxBudget + '円',
+      'スライダーの後半がほぼ無意味。max を ' + (Math.ceil(maxBudget / 1000) * 1000 + 1000) + ' 程度にすると使いやすい'
+    );
+
+    // --- fadeIn 重複 ---
+    addResult(sec6, null,
+      'CSSとJSの両方で @keyframes fadeIn を定義（重複）',
+      '動作はするが冗長。どちらか一方に統一推奨'
+    );
+
+    // =========================================================
+    //  サマリー更新
+    // =========================================================
+    updateSummary();
+
+  })();
+  </script>
+
+</body>
+</html>

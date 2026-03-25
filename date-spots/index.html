@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>デートどこ行く？ - 東京のおすすめデートスポット</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== ヘッダー ===== -->
+  <header class="header">
+    <h1>デートどこ行く？</h1>
+    <p>東京のおすすめデートスポット</p>
+  </header>
+
+  <!-- ===== メインコンテンツ ===== -->
+  <main class="container">
+
+    <!-- フィルターエリア -->
+    <section id="filter-area">
+
+      <!-- カテゴリフィルター -->
+      <div class="filter-group" id="category-filter">
+        <h2 class="filter-label">カテゴリ</h2>
+        <div class="filters">
+          <button type="button" class="filter-btn" data-category="カフェ">カフェ</button>
+          <button type="button" class="filter-btn" data-category="公園">公園</button>
+          <button type="button" class="filter-btn" data-category="水族館">水族館</button>
+          <button type="button" class="filter-btn" data-category="美術館">美術館</button>
+          <button type="button" class="filter-btn" data-category="夜景">夜景</button>
+        </div>
+      </div>
+
+      <!-- エリアフィルター -->
+      <div class="filter-group" id="area-filter">
+        <h2 class="filter-label">エリア</h2>
+        <div class="filters">
+          <button type="button" class="filter-btn" data-area="渋谷">渋谷</button>
+          <button type="button" class="filter-btn" data-area="お台場">お台場</button>
+          <button type="button" class="filter-btn" data-area="六本木">六本木</button>
+          <button type="button" class="filter-btn" data-area="浅草">浅草</button>
+          <button type="button" class="filter-btn" data-area="新宿">新宿</button>
+        </div>
+      </div>
+
+      <!-- 予算スライダー -->
+      <div class="filter-group" id="budget-filter">
+        <h2 class="filter-label">予算</h2>
+        <div class="budget-slider-wrap">
+          <input type="range" id="budget-slider" min="0" max="10000" step="500" value="5000">
+          <output id="budget-value" for="budget-slider">5,000円</output>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- スポットカード一覧 -->
+    <section id="spots-container" class="card-grid">
+      <!--
+        ===== カードテンプレート構造 =====
+        タクヤの spots-data.js から JS でレンダリングする想定。
+        1枚のカードは以下の構造:
+
+        <article class="spot-card" data-category="cafe" data-area="shibuya" data-budget="1500">
+          <div class="spot-image">☕</div>
+          <h3 class="spot-name">スポット名</h3>
+          <p class="spot-area">渋谷</p>
+          <div class="spot-tags">
+            <span class="spot-tag">カフェ</span>
+          </div>
+          <p class="spot-budget">予算: ¥1,500</p>
+          <p class="spot-comment">一言コメントがここに入る</p>
+          <div class="spot-rating" data-stars="4">★★★★☆</div>
+        </article>
+      -->
+    </section>
+
+  </main>
+
+  <!-- ===== フッター ===== -->
+  <footer id="site-footer">
+    <p class="copyright">&copy; 2026 デートどこ行く？ All rights reserved.</p>
+  </footer>
+
+  <!-- 外部スクリプト -->
+  <script src="spots-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
